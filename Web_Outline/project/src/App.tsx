@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Play, Square } from 'lucide-react';
+import { PixiFlicker } from './PixiFlicker';
 
 interface Option {
   text: string;
@@ -18,40 +19,8 @@ function App() {
     { text: 'Option 5', frequency: 10 },
     { text: 'Option 6', frequency: 12 },
   ]);
-  const [flickerStates, setFlickerStates] = useState<boolean[]>(Array(6).fill(true));
-  const animationFrameRef = useRef<number>();
-  const startTimeRef = useRef<number>(0);
 
   const availableFrequencies = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24, 30, 40, 60];
-
-  useEffect(() => {
-    if (!isPlaying) {
-      setFlickerStates(Array(6).fill(true));
-      return;
-    }
-
-    startTimeRef.current = performance.now();
-
-    const animate = (currentTime: number) => {
-      const elapsed = (currentTime - startTimeRef.current) / 1000;
-
-      const newStates = options.map((option) => {
-        const cycle = elapsed * option.frequency;
-        return Math.floor(cycle) % 2 === 0;
-      });
-
-      setFlickerStates(newStates);
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isPlaying, options]);
 
   const handleFrequencyChange = (index: number, value: number) => {
     const newOptions = [...options];
@@ -63,12 +32,6 @@ function App() {
     const newOptions = [...options];
     newOptions[index].text = text;
     setOptions(newOptions);
-  };
-
-  const getGridClass = () => {
-    if (numOptions <= 4) return 'grid-cols-2 grid-rows-2';
-    if (numOptions === 5) return 'grid-cols-2 grid-rows-3';
-    return 'grid-cols-3 grid-rows-2';
   };
 
   return (
@@ -146,26 +109,12 @@ function App() {
         </div>
       </div>
 
-      <div className="flex-1 bg-gray-200 p-8">
-        <div className="bg-white rounded-lg p-4 mb-4 text-center">
-          <h2 className="text-lg font-medium">{questionText}</h2>
-        </div>
-
-        <div className={`grid ${getGridClass()} gap-4 h-[calc(100%-80px)]`}>
-          {Array.from({ length: numOptions }, (_, i) => (
-            <div
-              key={i}
-              className="rounded-lg flex items-center justify-center text-lg font-medium transition-colors duration-75"
-              style={{
-                backgroundColor: flickerStates[i] ? 'white' : '#1f2937',
-                color: flickerStates[i] ? '#1f2937' : 'white',
-              }}
-            >
-              {options[i]?.text || `Option ${i + 1}`}
-            </div>
-          ))}
-        </div>
-      </div>
+      <PixiFlicker
+        options={options}
+        numOptions={numOptions}
+        isPlaying={isPlaying}
+        questionText={questionText}
+      />
     </div>
   );
 }
